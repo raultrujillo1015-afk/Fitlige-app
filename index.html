@@ -1,0 +1,1552 @@
+<!DOCTYPE html>
+
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FitLife — Tu Entrenador Personal</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700;1,300&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+  :root {
+    --black: #0a0a0a;
+    --off-black: #111111;
+    --card: #181818;
+    --border: #2a2a2a;
+    --lime: #c8f135;
+    --lime-dim: #9fbe28;
+    --white: #f0f0ec;
+    --muted: #888;
+    --red: #ff4444;
+    --blue: #4488ff;
+    --orange: #ff8833;
+  }
+
+- { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+background: var(–black);
+color: var(–white);
+font-family: ‘DM Sans’, sans-serif;
+min-height: 100vh;
+overflow-x: hidden;
+}
+
+/* ── NOISE TEXTURE ── */
+body::before {
+content: ‘’;
+position: fixed; inset: 0;
+background-image: url(“data:image/svg+xml,%3Csvg viewBox=‘0 0 256 256’ xmlns=‘http://www.w3.org/2000/svg’%3E%3Cfilter id=‘noise’%3E%3CfeTurbulence type=‘fractalNoise’ baseFrequency=‘0.9’ numOctaves=‘4’ stitchTiles=‘stitch’/%3E%3C/filter%3E%3Crect width=‘100%25’ height=‘100%25’ filter=‘url(%23noise)’ opacity=‘0.04’/%3E%3C/svg%3E”);
+pointer-events: none; z-index: 9999; opacity: .5;
+}
+
+/* ── LOGIN SCREEN ── */
+#login-screen {
+display: flex; flex-direction: column;
+align-items: center; justify-content: center;
+min-height: 100vh; padding: 2rem;
+background: radial-gradient(ellipse 80% 60% at 50% 0%, #1a2a00 0%, var(–black) 70%);
+}
+
+.logo-big {
+font-family: ‘Bebas Neue’, sans-serif;
+font-size: clamp(5rem, 15vw, 10rem);
+line-height: .9;
+letter-spacing: -0.02em;
+color: var(–lime);
+text-shadow: 0 0 80px rgba(200,241,53,.3);
+margin-bottom: .5rem;
+}
+
+.tagline {
+font-family: ‘Space Mono’, monospace;
+font-size: .75rem;
+letter-spacing: .2em;
+color: var(–muted);
+text-transform: uppercase;
+margin-bottom: 3rem;
+}
+
+.feature-pills {
+display: flex; flex-wrap: wrap; gap: .5rem;
+justify-content: center; margin-bottom: 3rem; max-width: 500px;
+}
+
+.pill {
+background: rgba(200,241,53,.08);
+border: 1px solid rgba(200,241,53,.2);
+color: var(–lime);
+padding: .3rem .8rem; border-radius: 100px;
+font-size: .8rem; font-weight: 500;
+}
+
+.google-btn {
+display: flex; align-items: center; gap: .75rem;
+background: var(–white); color: #1a1a1a;
+border: none; border-radius: 12px;
+padding: .9rem 2rem; cursor: pointer;
+font-family: ‘DM Sans’, sans-serif;
+font-size: 1rem; font-weight: 600;
+transition: all .2s; box-shadow: 0 4px 20px rgba(200,241,53,.2);
+}
+
+.google-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(200,241,53,.35); }
+.google-btn:active { transform: translateY(0); }
+
+.google-icon { width: 22px; height: 22px; }
+
+.drive-note {
+margin-top: 1.5rem; font-size: .75rem; color: var(–muted);
+display: flex; align-items: center; gap: .4rem;
+}
+
+/* ── MAIN APP ── */
+#app { display: none; flex-direction: column; min-height: 100vh; }
+
+/* ── HEADER ── */
+header {
+position: sticky; top: 0; z-index: 100;
+background: rgba(10,10,10,.85); backdrop-filter: blur(20px);
+border-bottom: 1px solid var(–border);
+padding: 0 1.5rem; height: 60px;
+display: flex; align-items: center; justify-content: space-between;
+}
+
+.logo-sm {
+font-family: ‘Bebas Neue’, sans-serif;
+font-size: 1.8rem; color: var(–lime); letter-spacing: .05em;
+}
+
+.user-info { display: flex; align-items: center; gap: .75rem; }
+
+.avatar {
+width: 34px; height: 34px; border-radius: 50%;
+border: 2px solid var(–lime);
+}
+
+.username { font-size: .85rem; font-weight: 500; }
+
+.sync-btn {
+display: flex; align-items: center; gap: .4rem;
+background: rgba(200,241,53,.1); border: 1px solid rgba(200,241,53,.3);
+color: var(–lime); border-radius: 8px;
+padding: .35rem .75rem; cursor: pointer;
+font-family: ‘DM Sans’, sans-serif; font-size: .8rem; font-weight: 600;
+transition: all .2s;
+}
+
+.sync-btn:hover { background: rgba(200,241,53,.2); }
+.sync-btn.syncing .sync-icon { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── NAV ── */
+nav {
+display: flex; gap: 0;
+border-bottom: 1px solid var(–border);
+padding: 0 1.5rem; overflow-x: auto;
+}
+
+.nav-btn {
+display: flex; align-items: center; gap: .4rem;
+padding: .75rem 1.25rem; cursor: pointer;
+background: none; border: none; color: var(–muted);
+font-family: ‘DM Sans’, sans-serif; font-size: .85rem; font-weight: 500;
+border-bottom: 2px solid transparent; margin-bottom: -1px;
+transition: all .2s; white-space: nowrap;
+}
+
+.nav-btn.active { color: var(–lime); border-bottom-color: var(–lime); }
+.nav-btn:hover:not(.active) { color: var(–white); }
+
+/* ── CONTENT ── */
+main { flex: 1; padding: 1.5rem; max-width: 900px; margin: 0 auto; width: 100%; }
+
+.section { display: none; }
+.section.active { display: block; animation: fadeUp .3s ease; }
+
+@keyframes fadeUp {
+from { opacity: 0; transform: translateY(12px); }
+to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── CARDS ── */
+.card {
+background: var(–card); border: 1px solid var(–border);
+border-radius: 16px; padding: 1.5rem; margin-bottom: 1rem;
+}
+
+.card-title {
+font-family: ‘Bebas Neue’, sans-serif;
+font-size: 1.4rem; letter-spacing: .05em; color: var(–lime);
+margin-bottom: 1rem;
+}
+
+/* ── STAT GRID ── */
+.stat-grid {
+display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+gap: .75rem; margin-bottom: 1rem;
+}
+
+.stat-card {
+background: var(–off-black); border: 1px solid var(–border);
+border-radius: 12px; padding: 1rem; text-align: center;
+}
+
+.stat-val {
+font-family: ‘Bebas Neue’, sans-serif;
+font-size: 2.2rem; color: var(–lime); line-height: 1;
+}
+
+.stat-unit { font-size: .7rem; color: var(–lime); font-family: ‘Space Mono’, monospace; }
+.stat-label { font-size: .75rem; color: var(–muted); margin-top: .3rem; }
+
+/* ── PROGRESS BARS ── */
+.progress-row {
+display: flex; align-items: center; gap: 1rem; margin-bottom: .75rem;
+}
+
+.progress-label { font-size: .85rem; width: 100px; color: var(–muted); flex-shrink: 0; }
+.progress-bar { flex: 1; height: 8px; background: var(–border); border-radius: 100px; overflow: hidden; }
+
+.progress-fill {
+height: 100%; border-radius: 100px;
+background: linear-gradient(90deg, var(–lime), var(–lime-dim));
+transition: width .8s cubic-bezier(.4,0,.2,1);
+}
+
+.progress-val { font-family: ‘Space Mono’, monospace; font-size: .75rem; color: var(–white); width: 50px; text-align: right; flex-shrink: 0; }
+
+/* ── FORMS ── */
+.form-group { margin-bottom: 1rem; }
+
+label { display: block; font-size: .8rem; color: var(–muted); margin-bottom: .4rem; font-weight: 500; letter-spacing: .05em; text-transform: uppercase; }
+
+input[type=text], input[type=number], select, textarea {
+width: 100%; background: var(–off-black); border: 1px solid var(–border);
+color: var(–white); border-radius: 10px; padding: .7rem 1rem;
+font-family: ‘DM Sans’, sans-serif; font-size: .95rem;
+transition: border-color .2s; outline: none;
+}
+
+input:focus, select:focus, textarea:focus { border-color: var(–lime); }
+select option { background: var(–off-black); }
+textarea { resize: vertical; min-height: 80px; }
+
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .75rem; }
+
+/* ── BUTTONS ── */
+.btn {
+display: inline-flex; align-items: center; gap: .5rem;
+padding: .65rem 1.5rem; border-radius: 10px;
+font-family: ‘DM Sans’, sans-serif; font-size: .9rem; font-weight: 700;
+cursor: pointer; transition: all .2s; border: none;
+}
+
+.btn-lime { background: var(–lime); color: var(–black); }
+.btn-lime:hover { background: #d4f548; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(200,241,53,.3); }
+
+.btn-outline {
+background: transparent; color: var(–lime);
+border: 1.5px solid rgba(200,241,53,.4);
+}
+.btn-outline:hover { background: rgba(200,241,53,.08); }
+
+.btn-danger { background: rgba(255,68,68,.15); color: var(–red); border: 1px solid rgba(255,68,68,.3); }
+.btn-danger:hover { background: rgba(255,68,68,.25); }
+
+/* ── LISTS ── */
+.item-list { display: flex; flex-direction: column; gap: .6rem; }
+
+.list-item {
+background: var(–off-black); border: 1px solid var(–border);
+border-radius: 12px; padding: 1rem 1.25rem;
+display: flex; align-items: center; justify-content: space-between;
+transition: border-color .2s;
+}
+
+.list-item:hover { border-color: rgba(200,241,53,.25); }
+
+.list-item-title { font-weight: 600; font-size: .95rem; }
+.list-item-sub { font-size: .8rem; color: var(–muted); margin-top: .2rem; }
+
+.badge {
+padding: .2rem .6rem; border-radius: 100px;
+font-size: .7rem; font-weight: 700;
+font-family: ‘Space Mono’, monospace;
+}
+
+.badge-lime { background: rgba(200,241,53,.15); color: var(–lime); }
+.badge-orange { background: rgba(255,136,51,.15); color: var(–orange); }
+.badge-blue { background: rgba(68,136,255,.15); color: var(–blue); }
+.badge-red { background: rgba(255,68,68,.15); color: var(–red); }
+
+/* ── WEEK CALENDAR ── */
+.week-grid {
+display: grid; grid-template-columns: repeat(7, 1fr);
+gap: .4rem; margin-bottom: 1.5rem;
+}
+
+.day-cell {
+aspect-ratio: 1; border-radius: 10px;
+display: flex; flex-direction: column; align-items: center; justify-content: center;
+font-size: .7rem; cursor: pointer; transition: all .2s;
+border: 1px solid var(–border); background: var(–off-black);
+}
+
+.day-name { font-family: ‘Space Mono’, monospace; font-size: .6rem; color: var(–muted); margin-bottom: .2rem; }
+.day-num { font-weight: 700; }
+
+.day-cell.has-workout { border-color: var(–lime); background: rgba(200,241,53,.08); }
+.day-cell.has-workout .day-num { color: var(–lime); }
+.day-cell.today { border-color: var(–blue); background: rgba(68,136,255,.1); }
+.day-cell.today .day-num { color: var(–blue); }
+
+/* ── MACROS CIRCLE ── */
+.macro-circles {
+display: flex; gap: 1.5rem; justify-content: center;
+flex-wrap: wrap; margin: 1rem 0;
+}
+
+.macro-circle {
+display: flex; flex-direction: column; align-items: center; gap: .5rem;
+}
+
+svg.ring { transform: rotate(-90deg); }
+.ring-bg { fill: none; stroke: var(–border); stroke-width: 6; }
+.ring-fill { fill: none; stroke-width: 6; stroke-linecap: round; transition: stroke-dashoffset .8s ease; }
+
+.macro-val-wrap { text-align: center; }
+.macro-val { font-family: ‘Bebas Neue’, sans-serif; font-size: 1.5rem; }
+.macro-name { font-size: .7rem; color: var(–muted); font-family: ‘Space Mono’, monospace; }
+
+/* ── TOAST ── */
+#toast {
+position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(80px);
+background: var(–lime); color: var(–black);
+padding: .75rem 1.5rem; border-radius: 100px;
+font-weight: 700; font-size: .85rem; z-index: 999;
+transition: transform .3s cubic-bezier(.4,0,.2,1);
+white-space: nowrap; box-shadow: 0 4px 20px rgba(200,241,53,.4);
+}
+
+#toast.show { transform: translateX(-50%) translateY(0); }
+
+/* ── MODAL ── */
+.modal-overlay {
+display: none; position: fixed; inset: 0;
+background: rgba(0,0,0,.8); z-index: 500;
+align-items: center; justify-content: center; padding: 1rem;
+}
+
+.modal-overlay.open { display: flex; }
+
+.modal {
+background: var(–card); border: 1px solid var(–border);
+border-radius: 20px; padding: 2rem; width: 100%; max-width: 480px;
+animation: fadeUp .2s ease;
+}
+
+.modal-title {
+font-family: ‘Bebas Neue’, sans-serif; font-size: 1.6rem;
+color: var(–lime); margin-bottom: 1.25rem;
+}
+
+.modal-actions { display: flex; gap: .75rem; margin-top: 1.25rem; justify-content: flex-end; }
+
+/* ── EXERCISE TABLE ── */
+.ex-table { width: 100%; border-collapse: collapse; }
+.ex-table th { font-size: .75rem; color: var(–muted); text-align: left; padding: .5rem .75rem; border-bottom: 1px solid var(–border); text-transform: uppercase; letter-spacing: .05em; }
+.ex-table td { padding: .6rem .75rem; border-bottom: 1px solid rgba(255,255,255,.04); font-size: .9rem; }
+.ex-table tr:last-child td { border-bottom: none; }
+.ex-table tr:hover td { background: rgba(255,255,255,.02); }
+
+/* ── SECTION HEADER ── */
+.section-header {
+display: flex; align-items: center; justify-content: space-between;
+margin-bottom: 1.25rem;
+}
+
+.section-heading {
+font-family: ‘Bebas Neue’, sans-serif;
+font-size: 2rem; letter-spacing: .05em;
+}
+
+/* ── EMPTY STATE ── */
+.empty {
+text-align: center; padding: 3rem 1rem;
+color: var(–muted); font-size: .9rem;
+}
+
+.empty-icon { font-size: 3rem; margin-bottom: 1rem; }
+
+/* ── DRIVE STATUS BAR ── */
+#drive-status {
+position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+background: var(–lime); color: var(–black);
+text-align: center; font-size: .8rem; font-weight: 700;
+padding: .4rem; transform: translateY(-100%);
+transition: transform .3s;
+}
+
+#drive-status.show { transform: translateY(0); }
+
+/* ── CHART ── */
+.chart-wrap { position: relative; height: 140px; margin-top: 1rem; }
+.chart-bars { display: flex; align-items: flex-end; gap: 6px; height: 100%; }
+.chart-bar {
+flex: 1; border-radius: 4px 4px 0 0;
+background: rgba(200,241,53,.2); position: relative;
+transition: height .5s ease; cursor: pointer;
+min-height: 4px;
+}
+.chart-bar.active { background: var(–lime); }
+.chart-bar:hover { background: rgba(200,241,53,.5); }
+.chart-bar-label { position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%); font-size: .6rem; color: var(–muted); font-family: ‘Space Mono’, monospace; white-space: nowrap; }
+
+@media (max-width: 600px) {
+.form-row, .form-row-3 { grid-template-columns: 1fr; }
+.stat-grid { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+
+</head>
+<body>
+
+<div id="drive-status">✓ Guardado en Google Drive</div>
+<div id="toast"></div>
+
+<!-- ══════════════════════════════════════════════════════
+     LOGIN SCREEN
+══════════════════════════════════════════════════════ -->
+
+<div id="login-screen">
+  <div class="logo-big">FitLife</div>
+  <div class="tagline">Tu entrenador personal · sincronizado con Drive</div>
+
+  <div class="feature-pills">
+    <span class="pill">💪 Rutinas</span>
+    <span class="pill">🥗 Dietas</span>
+    <span class="pill">📊 Progreso</span>
+    <span class="pill">⚖️ Peso & Medidas</span>
+    <span class="pill">🔥 Calorías</span>
+    <span class="pill">☁️ Google Drive</span>
+  </div>
+
+  <button class="google-btn" id="login-btn">
+    <svg class="google-icon" viewBox="0 0 24 24">
+      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+    </svg>
+    Continuar con Google
+  </button>
+
+  <p class="drive-note">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    Tus datos se guardan en tu propio Google Drive
+  </p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     MAIN APP
+══════════════════════════════════════════════════════ -->
+
+<div id="app">
+  <header>
+    <div class="logo-sm">FitLife</div>
+    <div class="user-info">
+      <button class="sync-btn" id="sync-btn" onclick="syncToDrive()">
+        <svg class="sync-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+        Guardar Drive
+      </button>
+      <img class="avatar" id="user-avatar" src="" alt="">
+      <span class="username" id="user-name"></span>
+    </div>
+  </header>
+
+  <nav>
+    <button class="nav-btn active" data-section="dashboard" onclick="showSection('dashboard',this)">🏠 Inicio</button>
+    <button class="nav-btn" data-section="routines" onclick="showSection('routines',this)">💪 Rutinas</button>
+    <button class="nav-btn" data-section="nutrition" onclick="showSection('nutrition',this)">🥗 Nutrición</button>
+    <button class="nav-btn" data-section="progress" onclick="showSection('progress',this)">📊 Progreso</button>
+    <button class="nav-btn" data-section="profile" onclick="showSection('profile',this)">👤 Perfil</button>
+  </nav>
+
+  <main>
+
+```
+<!-- ── DASHBOARD ── -->
+<div class="section active" id="section-dashboard">
+  <div class="section-header">
+    <h1 class="section-heading" id="greeting">¡Hola! 👋</h1>
+  </div>
+
+  <div class="stat-grid" id="stats-row">
+    <div class="stat-card">
+      <div class="stat-val" id="stat-weight">--</div>
+      <div class="stat-unit">KG</div>
+      <div class="stat-label">Peso actual</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="stat-workouts">0</div>
+      <div class="stat-unit">SESIONES</div>
+      <div class="stat-label">Esta semana</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="stat-calories">0</div>
+      <div class="stat-unit">KCAL</div>
+      <div class="stat-label">Hoy</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="stat-streak">0</div>
+      <div class="stat-unit">DÍAS 🔥</div>
+      <div class="stat-label">Racha actual</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Semana actual</div>
+    <div class="week-grid" id="week-grid"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Macros de hoy</div>
+    <div class="macro-circles" id="macro-circles">
+      <div class="macro-circle">
+        <svg width="80" height="80" class="ring">
+          <circle class="ring-bg" cx="40" cy="40" r="34"/>
+          <circle class="ring-fill" cx="40" cy="40" r="34" stroke="#c8f135" id="ring-prot" stroke-dasharray="213.6" stroke-dashoffset="213.6"/>
+        </svg>
+        <div class="macro-val-wrap">
+          <div class="macro-val" id="mv-prot">0g</div>
+          <div class="macro-name">PROTEÍNA</div>
+        </div>
+      </div>
+      <div class="macro-circle">
+        <svg width="80" height="80" class="ring">
+          <circle class="ring-bg" cx="40" cy="40" r="34"/>
+          <circle class="ring-fill" cx="40" cy="40" r="34" stroke="#ff8833" id="ring-carb" stroke-dasharray="213.6" stroke-dashoffset="213.6"/>
+        </svg>
+        <div class="macro-val-wrap">
+          <div class="macro-val" id="mv-carb">0g</div>
+          <div class="macro-name">CARBOS</div>
+        </div>
+      </div>
+      <div class="macro-circle">
+        <svg width="80" height="80" class="ring">
+          <circle class="ring-bg" cx="40" cy="40" r="34"/>
+          <circle class="ring-fill" cx="40" cy="40" r="34" stroke="#4488ff" id="ring-fat" stroke-dasharray="213.6" stroke-dashoffset="213.6"/>
+        </svg>
+        <div class="macro-val-wrap">
+          <div class="macro-val" id="mv-fat">0g</div>
+          <div class="macro-name">GRASAS</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Próxima rutina</div>
+    <div id="next-routine-block">
+      <div class="empty"><div class="empty-icon">📋</div>No hay rutina programada. ¡Crea una!</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── ROUTINES ── -->
+<div class="section" id="section-routines">
+  <div class="section-header">
+    <h1 class="section-heading">Rutinas</h1>
+    <button class="btn btn-lime" onclick="openModal('routine')">+ Nueva</button>
+  </div>
+
+  <div id="routines-list" class="item-list">
+    <div class="empty"><div class="empty-icon">💪</div>Aún no tienes rutinas. ¡Crea la primera!</div>
+  </div>
+</div>
+
+<!-- ── NUTRITION ── -->
+<div class="section" id="section-nutrition">
+  <div class="section-header">
+    <h1 class="section-heading">Nutrición</h1>
+    <button class="btn btn-lime" onclick="openModal('meal')">+ Añadir comida</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Resumen de hoy</div>
+    <div class="progress-row">
+      <span class="progress-label">Calorías</span>
+      <div class="progress-bar"><div class="progress-fill" id="pb-cal" style="width:0%"></div></div>
+      <span class="progress-val" id="pv-cal">0 / 2000</span>
+    </div>
+    <div class="progress-row">
+      <span class="progress-label">Proteína</span>
+      <div class="progress-bar"><div class="progress-fill" id="pb-prot" style="width:0%;background:linear-gradient(90deg,#c8f135,#9fbe28)"></div></div>
+      <span class="progress-val" id="pv-prot">0 / 150g</span>
+    </div>
+    <div class="progress-row">
+      <span class="progress-label">Carbohidratos</span>
+      <div class="progress-bar"><div class="progress-fill" id="pb-carb" style="width:0%;background:linear-gradient(90deg,#ff8833,#cc6622)"></div></div>
+      <span class="progress-val" id="pv-carb">0 / 250g</span>
+    </div>
+    <div class="progress-row">
+      <span class="progress-label">Grasas</span>
+      <div class="progress-bar"><div class="progress-fill" id="pb-fat" style="width:0%;background:linear-gradient(90deg,#4488ff,#2266cc)"></div></div>
+      <span class="progress-val" id="pv-fat">0 / 65g</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Planes de dieta</div>
+    <div class="section-header" style="margin-bottom:.75rem">
+      <span style="font-size:.85rem;color:var(--muted)">Dietas guardadas</span>
+      <button class="btn btn-outline" style="padding:.4rem .9rem;font-size:.8rem" onclick="openModal('diet')">+ Nueva dieta</button>
+    </div>
+    <div id="diets-list" class="item-list">
+      <div class="empty"><div class="empty-icon">🥗</div>Sin planes de dieta todavía</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Registro de comidas — Hoy</div>
+    <div id="meals-list" class="item-list">
+      <div class="empty"><div class="empty-icon">🍽️</div>No has registrado comidas hoy</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── PROGRESS ── -->
+<div class="section" id="section-progress">
+  <div class="section-header">
+    <h1 class="section-heading">Progreso</h1>
+    <button class="btn btn-lime" onclick="openModal('measurement')">+ Medición</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Peso — últimos 7 registros</div>
+    <div class="chart-wrap">
+      <div class="chart-bars" id="weight-chart"></div>
+    </div>
+    <div style="margin-top:1.5rem"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Medidas corporales</div>
+    <div id="measurements-list" class="item-list">
+      <div class="empty"><div class="empty-icon">📏</div>Sin medidas registradas todavía</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Historial de entrenamientos</div>
+    <div id="workout-history" class="item-list">
+      <div class="empty"><div class="empty-icon">🏋️</div>Sin entrenamientos registrados</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── PROFILE ── -->
+<div class="section" id="section-profile">
+  <div class="section-header">
+    <h1 class="section-heading">Mi Perfil</h1>
+    <button class="btn btn-lime" onclick="saveProfile()">Guardar</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Datos personales</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Nombre</label>
+        <input type="text" id="pf-name" placeholder="Tu nombre">
+      </div>
+      <div class="form-group">
+        <label>Edad</label>
+        <input type="number" id="pf-age" placeholder="Años" min="1" max="120">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Altura (cm)</label>
+        <input type="number" id="pf-height" placeholder="cm" min="100" max="250">
+      </div>
+      <div class="form-group">
+        <label>Peso actual (kg)</label>
+        <input type="number" id="pf-weight" placeholder="kg" min="30" max="300" step="0.1">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Objetivo</label>
+        <select id="pf-goal">
+          <option value="">Seleccionar...</option>
+          <option value="deficit">Perder grasa</option>
+          <option value="maintenance">Mantenimiento</option>
+          <option value="bulk">Ganar músculo</option>
+          <option value="strength">Ganar fuerza</option>
+          <option value="endurance">Resistencia</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Nivel</label>
+        <select id="pf-level">
+          <option value="">Seleccionar...</option>
+          <option value="beginner">Principiante</option>
+          <option value="intermediate">Intermedio</option>
+          <option value="advanced">Avanzado</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Meta calórica diaria (kcal)</label>
+      <input type="number" id="pf-cals" placeholder="ej. 2000" min="1000" max="6000">
+    </div>
+    <div class="form-row-3">
+      <div class="form-group">
+        <label>Meta proteína (g)</label>
+        <input type="number" id="pf-mprot" placeholder="150" min="0">
+      </div>
+      <div class="form-group">
+        <label>Meta carbos (g)</label>
+        <input type="number" id="pf-mcarb" placeholder="250" min="0">
+      </div>
+      <div class="form-group">
+        <label>Meta grasas (g)</label>
+        <input type="number" id="pf-mfat" placeholder="65" min="0">
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Estado de Google Drive</div>
+    <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+      <div>
+        <div style="font-size:.85rem;color:var(--muted)">Archivo en Drive</div>
+        <div style="font-size:.9rem;font-weight:600" id="drive-file-name">fitlife-data.json</div>
+      </div>
+      <button class="btn btn-outline" onclick="syncToDrive()">☁️ Sincronizar ahora</button>
+      <button class="btn btn-danger" onclick="signOut()">Cerrar sesión</button>
+    </div>
+  </div>
+</div>
+```
+
+  </main>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     MODALS
+══════════════════════════════════════════════════════ -->
+
+<!-- Routine Modal -->
+
+<div class="modal-overlay" id="modal-routine">
+  <div class="modal">
+    <div class="modal-title">Nueva Rutina</div>
+    <div class="form-group">
+      <label>Nombre de la rutina</label>
+      <input type="text" id="rt-name" placeholder="ej. Pecho y Tríceps">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Día</label>
+        <select id="rt-day">
+          <option value="Lunes">Lunes</option>
+          <option value="Martes">Martes</option>
+          <option value="Miércoles">Miércoles</option>
+          <option value="Jueves">Jueves</option>
+          <option value="Viernes">Viernes</option>
+          <option value="Sábado">Sábado</option>
+          <option value="Domingo">Domingo</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Tipo</label>
+        <select id="rt-type">
+          <option value="Fuerza">Fuerza</option>
+          <option value="Cardio">Cardio</option>
+          <option value="Hipertrofia">Hipertrofia</option>
+          <option value="HIIT">HIIT</option>
+          <option value="Flexibilidad">Flexibilidad</option>
+          <option value="Mixto">Mixto</option>
+        </select>
+      </div>
+    </div>
+    <div id="exercises-container">
+      <div style="font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.5rem">Ejercicios</div>
+      <div id="exercise-rows"></div>
+      <button class="btn btn-outline" style="width:100%;margin-top:.5rem;justify-content:center" onclick="addExerciseRow()">+ Añadir ejercicio</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('routine')">Cancelar</button>
+      <button class="btn btn-lime" onclick="saveRoutine()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Meal Modal -->
+
+<div class="modal-overlay" id="modal-meal">
+  <div class="modal">
+    <div class="modal-title">Registrar Comida</div>
+    <div class="form-group">
+      <label>Alimento</label>
+      <input type="text" id="ml-name" placeholder="ej. Pollo a la plancha">
+    </div>
+    <div class="form-group">
+      <label>Momento del día</label>
+      <select id="ml-moment">
+        <option value="Desayuno">Desayuno</option>
+        <option value="Media mañana">Media mañana</option>
+        <option value="Almuerzo">Almuerzo</option>
+        <option value="Merienda">Merienda</option>
+        <option value="Cena">Cena</option>
+        <option value="Pre-entreno">Pre-entreno</option>
+        <option value="Post-entreno">Post-entreno</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Calorías (kcal)</label>
+        <input type="number" id="ml-cal" placeholder="0" min="0">
+      </div>
+      <div class="form-group">
+        <label>Cantidad (g/ml)</label>
+        <input type="number" id="ml-qty" placeholder="100" min="0">
+      </div>
+    </div>
+    <div class="form-row-3">
+      <div class="form-group">
+        <label>Proteínas (g)</label>
+        <input type="number" id="ml-prot" placeholder="0" min="0">
+      </div>
+      <div class="form-group">
+        <label>Carbos (g)</label>
+        <input type="number" id="ml-carb" placeholder="0" min="0">
+      </div>
+      <div class="form-group">
+        <label>Grasas (g)</label>
+        <input type="number" id="ml-fat" placeholder="0" min="0">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('meal')">Cancelar</button>
+      <button class="btn btn-lime" onclick="saveMeal()">Registrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Diet Modal -->
+
+<div class="modal-overlay" id="modal-diet">
+  <div class="modal">
+    <div class="modal-title">Plan de Dieta</div>
+    <div class="form-group">
+      <label>Nombre del plan</label>
+      <input type="text" id="dt-name" placeholder="ej. Déficit calórico 2000kcal">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Tipo</label>
+        <select id="dt-type">
+          <option value="Déficit">Déficit calórico</option>
+          <option value="Mantenimiento">Mantenimiento</option>
+          <option value="Volumen">Volumen / Bulk</option>
+          <option value="Cetogénica">Cetogénica</option>
+          <option value="Alta proteína">Alta proteína</option>
+          <option value="Personalizada">Personalizada</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Calorías / día</label>
+        <input type="number" id="dt-cal" placeholder="2000" min="0">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Notas / descripción</label>
+      <textarea id="dt-notes" placeholder="Descripción del plan, alimentos permitidos, etc."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('diet')">Cancelar</button>
+      <button class="btn btn-lime" onclick="saveDiet()">Guardar plan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Measurement Modal -->
+
+<div class="modal-overlay" id="modal-measurement">
+  <div class="modal">
+    <div class="modal-title">Nueva Medición</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Fecha</label>
+        <input type="text" id="ms-date" placeholder="ej. 06/03/2025">
+      </div>
+      <div class="form-group">
+        <label>Peso (kg)</label>
+        <input type="number" id="ms-weight" placeholder="0" min="0" step="0.1">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Cintura (cm)</label>
+        <input type="number" id="ms-waist" placeholder="0" min="0">
+      </div>
+      <div class="form-group">
+        <label>Cadera (cm)</label>
+        <input type="number" id="ms-hip" placeholder="0" min="0">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Pecho (cm)</label>
+        <input type="number" id="ms-chest" placeholder="0" min="0">
+      </div>
+      <div class="form-group">
+        <label>Brazo (cm)</label>
+        <input type="number" id="ms-arm" placeholder="0" min="0">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Muslo (cm)</label>
+        <input type="number" id="ms-thigh" placeholder="0" min="0">
+      </div>
+      <div class="form-group">
+        <label>% Grasa corporal</label>
+        <input type="number" id="ms-bf" placeholder="0" min="0" max="100" step="0.1">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('measurement')">Cancelar</button>
+      <button class="btn btn-lime" onclick="saveMeasurement()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════
+const DRIVE_FILE = 'fitlife-data.json';
+
+let userData = {
+  profile: {},
+  routines: [],
+  meals: [],
+  diets: [],
+  measurements: [],
+  workoutLog: []
+};
+
+let accessToken = null;
+let driveFileId = null;
+let currentUser = null;
+
+// ══════════════════════════════════════════════════════
+//  GOOGLE AUTH
+// ══════════════════════════════════════════════════════
+document.getElementById('login-btn').addEventListener('click', () => {
+  // Google OAuth2 Implicit flow
+  const clientId = ''; // placeholder – see note below
+  const scope = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile';
+  const redirect = encodeURIComponent(window.location.href.split('?')[0]);
+
+  if (!clientId) {
+    // Demo mode – works offline without real OAuth
+    demoLogin();
+    return;
+  }
+
+  const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirect}&response_type=token&scope=${encodeURIComponent(scope)}&prompt=select_account`;
+  window.location.href = url;
+});
+
+function handleOAuthCallback() {
+  const hash = window.location.hash.substring(1);
+  const params = new URLSearchParams(hash);
+  if (params.get('access_token')) {
+    accessToken = params.get('access_token');
+    history.replaceState({}, document.title, window.location.pathname);
+    fetchUserInfo();
+  } else {
+    // Check if demo
+    const saved = localStorage.getItem('fitlife_demo_user');
+    if (saved) {
+      currentUser = JSON.parse(saved);
+      loadDemoData();
+      launchApp();
+    }
+  }
+}
+
+async function fetchUserInfo() {
+  try {
+    const r = await fetch('https://www.googleapis.com/oauth2/v1/userinfo', {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+    currentUser = await r.json();
+    await loadFromDrive();
+    launchApp();
+  } catch(e) { demoLogin(); }
+}
+
+// ── Demo mode (no OAuth client id needed) ──
+function demoLogin() {
+  currentUser = {
+    name: 'Atleta',
+    picture: 'https://api.dicebear.com/7.x/initials/svg?seed=F&backgroundColor=c8f135&textColor=0a0a0a',
+    id: 'demo'
+  };
+  const saved = localStorage.getItem('fitlife_demo_data');
+  if (saved) userData = JSON.parse(saved);
+  localStorage.setItem('fitlife_demo_user', JSON.stringify(currentUser));
+  launchApp();
+}
+
+function loadDemoData() {
+  const saved = localStorage.getItem('fitlife_demo_data');
+  if (saved) userData = JSON.parse(saved);
+}
+
+// ══════════════════════════════════════════════════════
+//  GOOGLE DRIVE
+// ══════════════════════════════════════════════════════
+async function loadFromDrive() {
+  if (!accessToken) return;
+  try {
+    // Search for existing file
+    const search = await fetch(
+      `https://www.googleapis.com/drive/v3/files?q=name='${DRIVE_FILE}'+and+trashed=false&spaces=drive&fields=files(id,name)`,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+    const result = await search.json();
+    if (result.files && result.files.length > 0) {
+      driveFileId = result.files[0].id;
+      const content = await fetch(
+        `https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      userData = await content.json();
+      showToast('✓ Datos cargados desde Drive');
+    }
+  } catch(e) { console.log('No existing Drive file, will create on save'); }
+}
+
+async function syncToDrive() {
+  const btn = document.getElementById('sync-btn');
+  btn.classList.add('syncing');
+
+  // Always save locally
+  localStorage.setItem('fitlife_demo_data', JSON.stringify(userData));
+
+  if (!accessToken) {
+    setTimeout(() => {
+      btn.classList.remove('syncing');
+      showDriveStatus();
+      showToast('✓ Guardado localmente');
+    }, 800);
+    return;
+  }
+
+  try {
+    const body = JSON.stringify(userData);
+    if (driveFileId) {
+      await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body
+      });
+    } else {
+      const meta = await fetch('https://www.googleapis.com/drive/v3/files', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: DRIVE_FILE, mimeType: 'application/json' })
+      });
+      const created = await meta.json();
+      driveFileId = created.id;
+      await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body
+      });
+    }
+    showDriveStatus();
+    showToast('✓ Guardado en Google Drive');
+  } catch(e) {
+    showToast('⚠ Error al sincronizar');
+  } finally {
+    btn.classList.remove('syncing');
+  }
+}
+
+function showDriveStatus() {
+  const bar = document.getElementById('drive-status');
+  bar.classList.add('show');
+  setTimeout(() => bar.classList.remove('show'), 2500);
+}
+
+// ══════════════════════════════════════════════════════
+//  APP LAUNCH
+// ══════════════════════════════════════════════════════
+function launchApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  document.getElementById('user-avatar').src = currentUser.picture || '';
+  document.getElementById('user-name').textContent = currentUser.name?.split(' ')[0] || 'Atleta';
+
+  const h = new Date().getHours();
+  const greet = h < 12 ? '¡Buenos días' : h < 20 ? '¡Buenas tardes' : '¡Buenas noches';
+  document.getElementById('greeting').textContent = `${greet}, ${currentUser.name?.split(' ')[0] || 'Atleta'}! 👋`;
+
+  renderAll();
+  prefillProfile();
+}
+
+function signOut() {
+  localStorage.removeItem('fitlife_demo_user');
+  accessToken = null; currentUser = null;
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+}
+
+// ══════════════════════════════════════════════════════
+//  RENDER
+// ══════════════════════════════════════════════════════
+function renderAll() {
+  renderDashboard();
+  renderRoutines();
+  renderNutrition();
+  renderProgress();
+}
+
+function renderDashboard() {
+  // stats
+  const p = userData.profile;
+  document.getElementById('stat-weight').textContent = p.weight || '--';
+
+  const today = todayStr();
+  const todayMeals = userData.meals.filter(m => m.date === today);
+  const totalCal = todayMeals.reduce((s,m) => s + (+m.cal||0), 0);
+  document.getElementById('stat-calories').textContent = totalCal;
+
+  const weekDays = getWeekDays();
+  const workoutsThisWeek = userData.workoutLog.filter(w => weekDays.includes(w.date)).length;
+  document.getElementById('stat-workouts').textContent = workoutsThisWeek;
+
+  // streak
+  let streak = 0;
+  const dates = [...new Set(userData.workoutLog.map(w => w.date))].sort().reverse();
+  for (let i = 0; i < dates.length; i++) {
+    const expected = new Date(); expected.setDate(expected.getDate() - i);
+    if (dates[i] === fmtDate(expected)) streak++;
+    else break;
+  }
+  document.getElementById('stat-streak').textContent = streak;
+
+  // week grid
+  renderWeekGrid(weekDays);
+
+  // macros
+  const totP = todayMeals.reduce((s,m) => s + (+m.prot||0), 0);
+  const totC = todayMeals.reduce((s,m) => s + (+m.carb||0), 0);
+  const totF = todayMeals.reduce((s,m) => s + (+m.fat||0), 0);
+  const mp = +(p.mprot||150), mc = +(p.mcarb||250), mf = +(p.mfat||65);
+
+  setRing('ring-prot', totP, mp);
+  setRing('ring-carb', totC, mc);
+  setRing('ring-fat', totF, mf);
+  document.getElementById('mv-prot').textContent = totP+'g';
+  document.getElementById('mv-carb').textContent = totC+'g';
+  document.getElementById('mv-fat').textContent = totF+'g';
+
+  // next routine
+  const days = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  const todayDay = days[new Date().getDay()];
+  const next = userData.routines.find(r => r.day === todayDay) || userData.routines[0];
+  const nb = document.getElementById('next-routine-block');
+  if (next) {
+    nb.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem">
+        <div>
+          <div style="font-size:1.1rem;font-weight:700">${next.name}</div>
+          <div style="font-size:.85rem;color:var(--muted)">${next.day} · ${next.type} · ${next.exercises?.length||0} ejercicios</div>
+        </div>
+        <button class="btn btn-lime" onclick="logWorkout('${next.name}')">Iniciar 🚀</button>
+      </div>`;
+  } else {
+    nb.innerHTML = `<div class="empty"><div class="empty-icon">📋</div>No hay rutina programada.</div>`;
+  }
+}
+
+function setRing(id, val, max) {
+  const el = document.getElementById(id);
+  const circ = 213.6;
+  const pct = Math.min(val / (max||1), 1);
+  el.style.strokeDashoffset = circ - (circ * pct);
+}
+
+function renderWeekGrid(weekDays) {
+  const grid = document.getElementById('week-grid');
+  const names = ['L','M','X','J','V','S','D'];
+  const logged = new Set(userData.workoutLog.map(w => w.date));
+  const today = todayStr();
+  grid.innerHTML = '';
+  weekDays.forEach((d, i) => {
+    const cell = document.createElement('div');
+    cell.className = 'day-cell' + (logged.has(d) ? ' has-workout' : '') + (d === today ? ' today' : '');
+    const [, , day] = d.split('-');
+    cell.innerHTML = `<div class="day-name">${names[i]}</div><div class="day-num">${+day}</div>`;
+    grid.appendChild(cell);
+  });
+}
+
+function renderRoutines() {
+  const list = document.getElementById('routines-list');
+  if (!userData.routines.length) {
+    list.innerHTML = `<div class="empty"><div class="empty-icon">💪</div>Aún no tienes rutinas. ¡Crea la primera!</div>`;
+    return;
+  }
+  const typeColors = { Fuerza:'badge-lime', Cardio:'badge-red', Hipertrofia:'badge-orange', HIIT:'badge-red', Flexibilidad:'badge-blue', Mixto:'badge-blue' };
+  list.innerHTML = userData.routines.map((r,i) => `
+    <div class="list-item">
+      <div>
+        <div class="list-item-title">${r.name}</div>
+        <div class="list-item-sub">${r.day} · ${r.exercises?.length||0} ejercicios</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:.5rem">
+        <span class="badge ${typeColors[r.type]||'badge-lime'}">${r.type}</span>
+        <button class="btn btn-lime" style="padding:.3rem .8rem;font-size:.8rem" onclick="logWorkout('${r.name}')">▶</button>
+        <button class="btn btn-danger" style="padding:.3rem .6rem;font-size:.8rem" onclick="deleteRoutine(${i})">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+function renderNutrition() {
+  const today = todayStr();
+  const todayMeals = userData.meals.filter(m => m.date === today);
+  const totCal = todayMeals.reduce((s,m) => s + (+m.cal||0), 0);
+  const totP = todayMeals.reduce((s,m) => s + (+m.prot||0), 0);
+  const totC = todayMeals.reduce((s,m) => s + (+m.carb||0), 0);
+  const totF = todayMeals.reduce((s,m) => s + (+m.fat||0), 0);
+  const p = userData.profile;
+  const mc = +(p.cals||2000), mp = +(p.mprot||150), mcarb = +(p.mcarb||250), mf = +(p.mfat||65);
+
+  document.getElementById('pb-cal').style.width = Math.min(totCal/mc*100,100)+'%';
+  document.getElementById('pv-cal').textContent = `${totCal} / ${mc}`;
+  document.getElementById('pb-prot').style.width = Math.min(totP/mp*100,100)+'%';
+  document.getElementById('pv-prot').textContent = `${totP}g / ${mp}g`;
+  document.getElementById('pb-carb').style.width = Math.min(totC/mcarb*100,100)+'%';
+  document.getElementById('pv-carb').textContent = `${totC}g / ${mcarb}g`;
+  document.getElementById('pb-fat').style.width = Math.min(totF/mf*100,100)+'%';
+  document.getElementById('pv-fat').textContent = `${totF}g / ${mf}g`;
+
+  // diets
+  const dl = document.getElementById('diets-list');
+  if (!userData.diets.length) {
+    dl.innerHTML = `<div class="empty"><div class="empty-icon">🥗</div>Sin planes de dieta todavía</div>`;
+  } else {
+    dl.innerHTML = userData.diets.map((d,i) => `
+      <div class="list-item">
+        <div>
+          <div class="list-item-title">${d.name}</div>
+          <div class="list-item-sub">${d.type} · ${d.cal} kcal/día${d.notes ? ' · '+d.notes.substring(0,50)+'...' : ''}</div>
+        </div>
+        <button class="btn btn-danger" style="padding:.3rem .6rem;font-size:.8rem" onclick="deleteDiet(${i})">✕</button>
+      </div>`).join('');
+  }
+
+  // meals today
+  const ml = document.getElementById('meals-list');
+  if (!todayMeals.length) {
+    ml.innerHTML = `<div class="empty"><div class="empty-icon">🍽️</div>No has registrado comidas hoy</div>`;
+  } else {
+    ml.innerHTML = todayMeals.map((m,i) => `
+      <div class="list-item">
+        <div>
+          <div class="list-item-title">${m.name}</div>
+          <div class="list-item-sub">${m.moment} · ${m.cal}kcal · P:${m.prot}g C:${m.carb}g G:${m.fat}g</div>
+        </div>
+        <button class="btn btn-danger" style="padding:.3rem .6rem;font-size:.8rem" onclick="deleteMeal('${m.id}')">✕</button>
+      </div>`).join('');
+  }
+}
+
+function renderProgress() {
+  // weight chart
+  const wc = document.getElementById('weight-chart');
+  const weights = userData.measurements.filter(m => m.weight).slice(-7);
+  if (!weights.length) { wc.innerHTML = `<div style="color:var(--muted);font-size:.85rem;width:100%;text-align:center;padding-top:2rem">Sin datos de peso aún</div>`; }
+  else {
+    const max = Math.max(...weights.map(w => +w.weight));
+    const min = Math.min(...weights.map(w => +w.weight));
+    wc.innerHTML = weights.map((w,i) => {
+      const h = max === min ? 60 : ((+w.weight - min) / (max - min)) * 80 + 20;
+      const isLast = i === weights.length - 1;
+      return `<div class="chart-bar ${isLast?'active':''}" style="height:${h}%" title="${w.weight}kg">
+        <div class="chart-bar-label">${w.date?.split('-').slice(1).join('/')}</div>
+      </div>`;
+    }).join('');
+  }
+
+  // measurements
+  const ml = document.getElementById('measurements-list');
+  if (!userData.measurements.length) {
+    ml.innerHTML = `<div class="empty"><div class="empty-icon">📏</div>Sin medidas registradas todavía</div>`;
+  } else {
+    ml.innerHTML = [...userData.measurements].reverse().slice(0,10).map((m,i) => `
+      <div class="list-item">
+        <div>
+          <div class="list-item-title">${m.date} · ${m.weight ? m.weight+'kg' : ''}</div>
+          <div class="list-item-sub">
+            ${m.waist ? `Cintura: ${m.waist}cm ` : ''}
+            ${m.chest ? `Pecho: ${m.chest}cm ` : ''}
+            ${m.arm ? `Brazo: ${m.arm}cm ` : ''}
+            ${m.bf ? `BF: ${m.bf}%` : ''}
+          </div>
+        </div>
+        <button class="btn btn-danger" style="padding:.3rem .6rem;font-size:.8rem" onclick="deleteMeasurement(${userData.measurements.length-1-i})">✕</button>
+      </div>`).join('');
+  }
+
+  // workout history
+  const wh = document.getElementById('workout-history');
+  if (!userData.workoutLog.length) {
+    wh.innerHTML = `<div class="empty"><div class="empty-icon">🏋️</div>Sin entrenamientos registrados</div>`;
+  } else {
+    wh.innerHTML = [...userData.workoutLog].reverse().slice(0,15).map(w => `
+      <div class="list-item">
+        <div>
+          <div class="list-item-title">${w.name}</div>
+          <div class="list-item-sub">${w.date} · ${w.time}</div>
+        </div>
+        <span class="badge badge-lime">✓</span>
+      </div>`).join('');
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  PROFILE
+// ══════════════════════════════════════════════════════
+function prefillProfile() {
+  const p = userData.profile;
+  ['name','age','height','weight','goal','level','cals','mprot','mcarb','mfat'].forEach(k => {
+    const el = document.getElementById('pf-'+k);
+    if (el && p[k]) el.value = p[k];
+  });
+}
+
+function saveProfile() {
+  ['name','age','height','weight','goal','level','cals','mprot','mcarb','mfat'].forEach(k => {
+    const el = document.getElementById('pf-'+k);
+    if (el) userData.profile[k] = el.value;
+  });
+  // Also update weight in latest measurement
+  if (userData.profile.weight) {
+    const today = todayStr();
+    const exists = userData.measurements.find(m => m.date === today);
+    if (!exists) userData.measurements.push({ date: today, weight: userData.profile.weight });
+  }
+  syncToDrive();
+  renderAll();
+  showToast('✓ Perfil guardado');
+}
+
+// ══════════════════════════════════════════════════════
+//  ROUTINES
+// ══════════════════════════════════════════════════════
+let exerciseRows = [];
+
+function addExerciseRow(ex) {
+  const container = document.getElementById('exercise-rows');
+  const id = Date.now() + Math.random();
+  exerciseRows.push(id);
+  const div = document.createElement('div');
+  div.id = 'er-'+id;
+  div.style.cssText = 'background:var(--off-black);border:1px solid var(--border);border-radius:10px;padding:.75rem;margin-bottom:.5rem';
+  div.innerHTML = `
+    <div class="form-row" style="margin-bottom:.4rem">
+      <input type="text" placeholder="Ejercicio" value="${ex?.name||''}" style="margin:0" class="ex-name-${id}">
+      <input type="number" placeholder="Series" value="${ex?.sets||''}" min="1" style="margin:0" class="ex-sets-${id}">
+    </div>
+    <div class="form-row-3">
+      <input type="number" placeholder="Reps" value="${ex?.reps||''}" min="1" style="margin:0" class="ex-reps-${id}">
+      <input type="text" placeholder="Peso/kg" value="${ex?.weight||''}" style="margin:0" class="ex-weight-${id}">
+      <input type="text" placeholder="Desc/RIR" value="${ex?.desc||''}" style="margin:0" class="ex-desc-${id}">
+    </div>`;
+  container.appendChild(div);
+}
+
+function openModal(type) {
+  if (type === 'routine') {
+    document.getElementById('rt-name').value = '';
+    document.getElementById('exercise-rows').innerHTML = '';
+    exerciseRows = [];
+    addExerciseRow(); addExerciseRow(); addExerciseRow();
+  }
+  if (type === 'meal') {
+    ['name','cal','qty','prot','carb','fat'].forEach(f => {
+      const el = document.getElementById('ml-'+f);
+      if (el) el.value = '';
+    });
+  }
+  if (type === 'diet') {
+    ['name','cal','notes'].forEach(f => { const el = document.getElementById('dt-'+f); if(el) el.value=''; });
+  }
+  if (type === 'measurement') {
+    document.getElementById('ms-date').value = todayStr();
+    ['weight','waist','hip','chest','arm','thigh','bf'].forEach(f => { document.getElementById('ms-'+f).value=''; });
+    if (userData.profile.weight) document.getElementById('ms-weight').value = userData.profile.weight;
+  }
+  document.getElementById('modal-'+type).classList.add('open');
+}
+
+function closeModal(type) { document.getElementById('modal-'+type).classList.remove('open'); }
+
+function saveRoutine() {
+  const name = document.getElementById('rt-name').value.trim();
+  if (!name) { showToast('⚠ Escribe un nombre'); return; }
+  const exercises = exerciseRows.map(id => ({
+    name: document.querySelector('.ex-name-'+id)?.value || '',
+    sets: document.querySelector('.ex-sets-'+id)?.value || '',
+    reps: document.querySelector('.ex-reps-'+id)?.value || '',
+    weight: document.querySelector('.ex-weight-'+id)?.value || '',
+    desc: document.querySelector('.ex-desc-'+id)?.value || '',
+  })).filter(e => e.name);
+  userData.routines.push({
+    id: Date.now(), name,
+    day: document.getElementById('rt-day').value,
+    type: document.getElementById('rt-type').value,
+    exercises
+  });
+  syncToDrive(); renderAll(); closeModal('routine');
+  showToast('✓ Rutina guardada');
+}
+
+function deleteRoutine(i) {
+  userData.routines.splice(i, 1);
+  syncToDrive(); renderRoutines();
+  showToast('Rutina eliminada');
+}
+
+function logWorkout(name) {
+  const now = new Date();
+  userData.workoutLog.push({
+    name, date: todayStr(),
+    time: now.toLocaleTimeString('es', { hour:'2-digit', minute:'2-digit' })
+  });
+  syncToDrive(); renderAll();
+  showToast(`🔥 ¡Entrenamiento "${name}" registrado!`);
+}
+
+// ══════════════════════════════════════════════════════
+//  NUTRITION
+// ══════════════════════════════════════════════════════
+function saveMeal() {
+  const name = document.getElementById('ml-name').value.trim();
+  if (!name) { showToast('⚠ Escribe el alimento'); return; }
+  userData.meals.push({
+    id: Date.now()+'', name,
+    moment: document.getElementById('ml-moment').value,
+    cal: document.getElementById('ml-cal').value || 0,
+    qty: document.getElementById('ml-qty').value || 0,
+    prot: document.getElementById('ml-prot').value || 0,
+    carb: document.getElementById('ml-carb').value || 0,
+    fat: document.getElementById('ml-fat').value || 0,
+    date: todayStr()
+  });
+  syncToDrive(); renderAll(); closeModal('meal');
+  showToast('✓ Comida registrada');
+}
+
+function deleteMeal(id) {
+  userData.meals = userData.meals.filter(m => m.id !== id);
+  syncToDrive(); renderNutrition(); renderDashboard();
+  showToast('Comida eliminada');
+}
+
+function saveDiet() {
+  const name = document.getElementById('dt-name').value.trim();
+  if (!name) { showToast('⚠ Escribe un nombre'); return; }
+  userData.diets.push({
+    name, type: document.getElementById('dt-type').value,
+    cal: document.getElementById('dt-cal').value || 0,
+    notes: document.getElementById('dt-notes').value
+  });
+  syncToDrive(); renderNutrition(); closeModal('diet');
+  showToast('✓ Plan de dieta guardado');
+}
+
+function deleteDiet(i) {
+  userData.diets.splice(i, 1);
+  syncToDrive(); renderNutrition();
+  showToast('Plan eliminado');
+}
+
+// ══════════════════════════════════════════════════════
+//  PROGRESS
+// ══════════════════════════════════════════════════════
+function saveMeasurement() {
+  const date = document.getElementById('ms-date').value.trim();
+  if (!date) { showToast('⚠ Indica la fecha'); return; }
+  const m = { date };
+  ['weight','waist','hip','chest','arm','thigh','bf'].forEach(f => {
+    const v = document.getElementById('ms-'+f).value;
+    if (v) m[f] = v;
+  });
+  userData.measurements.push(m);
+  if (m.weight) userData.profile.weight = m.weight;
+  syncToDrive(); renderAll(); closeModal('measurement');
+  showToast('✓ Medición registrada');
+}
+
+function deleteMeasurement(i) {
+  userData.measurements.splice(i, 1);
+  syncToDrive(); renderProgress();
+  showToast('Medición eliminada');
+}
+
+// ══════════════════════════════════════════════════════
+//  NAV
+// ══════════════════════════════════════════════════════
+function showSection(name, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('section-'+name).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ══════════════════════════════════════════════════════
+//  UTILITIES
+// ══════════════════════════════════════════════════════
+function todayStr() { return fmtDate(new Date()); }
+function fmtDate(d) {
+  const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'), day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+
+function getWeekDays() {
+  const now = new Date();
+  const day = now.getDay(); // 0=Sun
+  const mon = new Date(now); mon.setDate(now.getDate() - (day === 0 ? 6 : day - 1));
+  return Array.from({length:7}, (_,i) => { const d = new Date(mon); d.setDate(mon.getDate()+i); return fmtDate(d); });
+}
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ══════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════
+handleOAuthCallback();
+</script>
+
+</body>
+</html>
